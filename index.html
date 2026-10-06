@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Práctica Auditiva - Dictado de Intervalos</title>
+<style>
+  :root {
+    --bg: #0f1220;
+    --bg-2: #1a1e35;
+    --accent: #6c8cff;
+    --accent-2: #a06cff;
+    --ok: #3ddc84;
+    --err: #ff5470;
+    --txt: #eef1ff;
+    --muted: #8f96b8;
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, #232a55 0%, var(--bg) 60%);
+    color: var(--txt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .app {
+    width: min(920px, 100%);
+    background: linear-gradient(180deg, var(--bg-2), #12162a);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: .5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin: 6px 0 28px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  h2 {
+    font-size: 1rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 26px 0 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    user-select: none;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    background: rgba(108,140,255,.08);
+    transform: translateY(-2px);
+  }
+  .card input { display: none; }
+  .check {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--muted);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    transition: all .18s;
+  }
+  .card input:checked + .check {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+  }
+  .check svg { opacity: 0; transition: opacity .15s; }
+  .card input:checked + .check svg { opacity: 1; }
+  .card .label { font-size: .95rem; }
+  .card .short {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  .modes { display: flex; gap: 12px; flex-wrap: wrap; }
+  .mode-btn {
+    flex: 1; min-width: 160px;
+    padding: 16px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 12px;
+    color: var(--txt);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all .18s;
+    text-align: center;
+  }
+  .mode-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(108,140,255,.4);
+    font-weight: 600;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 26px;
+    border-radius: 12px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(108,140,255,.35);
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-2px); }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+  .btn-ghost {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    color: var(--txt);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,.1); }
+
+  .footer-actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  /* Pantalla 2 */
+  .hidden { display: none !important; }
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .badge-free {
+    display: inline-block;
+    font-size: .7rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(108,140,255,.15);
+    border: 1px solid rgba(108,140,255,.35);
+    color: var(--accent);
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+  .stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: .85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 78px;
+  }
+  .stat .num { font-size: 1.15rem; font-weight: 700; }
+  .stat.ok .num { color: var(--ok); }
+  .stat.err .num { color: var(--err); }
+  .stat label { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; }
+
+  .stage {
+    background: radial-gradient(circle at 50% 40%, rgba(108,140,255,.15), transparent 60%);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wave {
+    display: inline-flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: 70px;
+    margin-bottom: 14px;
+  }
+  .wave span {
+    width: 8px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    border-radius: 4px;
+    height: 12px;
+    transition: height .2s;
+  }
+  .wave.playing span { animation: bounce .9s ease-in-out infinite; }
+  .wave.playing span:nth-child(2){animation-delay:.1s}
+  .wave.playing span:nth-child(3){animation-delay:.2s}
+  .wave.playing span:nth-child(4){animation-delay:.3s}
+  .wave.playing span:nth-child(5){animation-delay:.4s}
+  .wave.playing span:nth-child(6){animation-delay:.5s}
+  .wave.playing span:nth-child(7){animation-delay:.6s}
+  @keyframes bounce {
+    0%,100%{height:12px} 50%{height:60px}
+  }
+  .stage-text { color: var(--muted); font-size: .95rem; }
+  .stage-text strong { color: var(--txt); }
+
+  .interval-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .iv-btn {
+    padding: 14px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    color: var(--txt);
+    font-size: .9rem;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+    text-align: center;
+    font-weight: 500;
+  }
+  .iv-btn:hover:not(:disabled) {
+    background: rgba(108,140,255,.15);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .iv-btn.correct {
+    background: rgba(61,220,132,.2);
+    border-color: var(--ok);
+    box-shadow: 0 0 18px rgba(61,220,132,.3);
+  }
+  .iv-btn.wrong {
+    background: rgba(255,84,112,.2);
+    border-color: var(--err);
+    animation: shake .35s;
+  }
+  .iv-btn.reveal {
+    background: rgba(61,220,132,.15);
+    border-color: var(--ok);
+    border-style: dashed;
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)}
+    75%{transform:translateX(6px)}
+  }
+
+  .feedback {
+    margin-top: 16px;
+    min-height: 24px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: .5px;
+  }
+  .feedback.ok { color: var(--ok); }
+  .feedback.err { color: var(--err); }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .empty-hint {
+    color: var(--muted);
+    font-size: .9rem;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .app { padding: 22px 18px; }
+    h1 { font-size: 1.5rem; }
+    .footer-actions { flex-direction: column; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ PANTALLA 1: CONFIGURACIÓN ============ -->
+  <section id="screen-setup">
+    <h1>Práctica auditiva</h1>
+    <p class="subtitle">Dictado de intervalos</p>
+
+    <h2>Selección de intervalos</h2>
+    <div class="grid" id="interval-select"></div>
+    <div class="empty-hint" id="hint"></div>
+
+    <h2>Modo</h2>
+    <div class="modes">
+      <button class="mode-btn active" data-mode="melodic">
+        🎼 Melódico<br><span style="font-size:.8rem;opacity:.8">2s + 2s (asc/desc aleatorio)</span>
+      </button>
+      <button class="mode-btn" data-mode="harmonic">
+        🎹 Armónico<br><span style="font-size:.8rem;opacity:.8">Ambas notas juntas 4s</span>
+      </button>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn btn-ghost" id="btn-select-all">Seleccionar todo</button>
+      <button class="btn btn-primary" id="btn-start" disabled>Comenzar dictado ▶</button>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA 2: DICTADO ============ -->
+  <section id="screen-quiz" class="hidden">
+    <div class="quiz-header">
+      <h1 style="font-size:1.4rem">Dictado de intervalos<span class="badge-free">Modo libre</span></h1>
+      <div class="stats">
+        <div class="stat"><label>Aciertos</label><span class="num" id="s-hits">0</span></div>
+        <div class="stat err"><label>Errores</label><span class="num" id="s-errs">0</span></div>
+        <div class="stat"><label>Repeticiones</label><span class="num" id="s-reps">0</span></div>
+        <div class="stat"><label>Ronda</label><span class="num" id="s-round">1</span></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="wave" id="wave">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="stage-text" id="stage-text">
+        Escucha atentamente y elige el intervalo...
+      </div>
+    </div>
+
+    <div class="interval-grid" id="answer-grid"></div>
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+      <button class="btn btn-ghost" id="btn-repeat">🔁 Repetir intervalo</button>
+      <button class="btn btn-primary" id="btn-next" disabled>Siguiente ▶</button>
+      <button class="btn btn-ghost" id="btn-exit">✖ Salir</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   MODELO DE INTERVALOS
+   ========================================================= */
+const INTERVALS = [
+  { id: 'm2', semitones: 1,  name: '2ª menor',  short: 'm2' },
+  { id: 'M2', semitones: 2,  name: '2ª mayor',  short: 'M2' },
+  { id: 'm3', semitones: 3,  name: '3ª menor',  short: 'm3' },
+  { id: 'M3', semitones: 4,  name: '3ª mayor',  short: 'M3' },
+  { id: 'P4', semitones: 5,  name: '4ª justa',  short: 'P4' },
+  { id: 'TT', semitones: 6,  name: 'Tritono',   short: 'TT' },
+  { id: 'P5', semitones: 7,  name: '5ª justa',  short: 'P5' },
+  { id: 'm6', semitones: 8,  name: '6ª menor',  short: 'm6' },
+  { id: 'M6', semitones: 9,  name: '6ª mayor',  short: 'M6' },
+  { id: 'm7', semitones: 10, name: '7ª menor',  short: 'm7' },
+  { id: 'M7', semitones: 11, name: '7ª mayor',  short: 'M7' },
+  { id: 'P8', semitones: 12, name: '8ª justa',  short: 'P8' },
+];
+
+const GROUPS = [
+  { label: '2ª M / m',  ids: ['m2','M2'] },
+  { label: '3ª M / m',  ids: ['m3','M3'] },
+  { label: '4ª, 5ª y 8ª justas', ids: ['P4','P5','P8'] },
+  { label: 'Tritono',   ids: ['TT'] },
+  { label: '6ª M / m',  ids: ['m6','M6'] },
+  { label: '7ª M / m',  ids: ['m7','M7'] },
+];
+
+/* =========================================================
+   AUDIO - Web Audio API con timbre tipo Rhodes / órgano
+   ========================================================= */
+const AudioEngine = (() => {
+  let ctx = null;
+  let master = null;
+
+  function init() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = 0.9;
+    const conv = ctx.createConvolver();
+    conv.buffer = makeImpulse(2.0, 2.5);
+    const wet = ctx.createGain(); wet.gain.value = 0.22;
+    const dry = ctx.createGain(); dry.gain.value = 0.85;
+    master.connect(dry).connect(ctx.destination);
+    master.connect(conv).connect(wet).connect(ctx.destination);
+  }
+
+  function makeImpulse(duration, decay) {
+    const rate = ctx.sampleRate;
+    const len = rate * duration;
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let c = 0; c < 2; c++) {
+      const ch = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) {
+        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+      }
+    }
+    return buf;
+  }
+
+  function freqFromMidi(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+  function playNote(freq, startTime, duration, gain = 0.18) {
+    const partials = [
+      { ratio: 1, gain: 1.00, type: 'sine' },
+      { ratio: 2, gain: 0.45, type: 'sine' },
+      { ratio: 3, gain: 0.18, type: 'sine' },
+      { ratio: 4, gain: 0.10, type: 'sine' },
+      { ratio: 6, gain: 0.05, type: 'sine' },
+    ];
+    const t0 = startTime;
+    const attack = 0.02;
+    const release = 0.6;
+
+    partials.forEach(p => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = p.type;
+      osc.frequency.value = freq * p.ratio;
+
+      const peak = gain * p.gain;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(peak, t0 + attack);
+      g.gain.setValueAtTime(peak, t0 + Math.max(attack, duration - release));
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration + release);
+
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.value = 5.5;
+      lfoGain.gain.value = freq * 0.003;
+      lfo.connect(lfoGain).connect(osc.frequency);
+      lfo.start(t0); lfo.stop(t0 + duration + release);
+
+      osc.connect(g).connect(master);
+      osc.start(t0);
+      osc.stop(t0 + duration + release + 0.1);
+    });
+  }
+
+  function playInterval(rootMidi, semitones, mode, direction = 'up') {
+    init();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime + 0.05;
+    const second = direction === 'up' ? rootMidi + semitones : rootMidi - semitones;
+    const f1 = freqFromMidi(rootMidi);
+    const f2 = freqFromMidi(second);
+
+    if (mode === 'melodic') {
+      playNote(f1, now, 2.0);
+      playNote(f2, now + 2.0, 2.0);
+    } else {
+      playNote(f1, now, 4.0);
+      playNote(f2, now, 4.0);
+    }
+  }
+
+  return { playInterval, init };
+})();
+
+/* =========================================================
+   ESTADO DE LA APP
+   ========================================================= */
+const state = {
+  selectedIntervals: new Set(),
+  mode: 'melodic',
+  currentInterval: null,
+  currentRoot: 60,
+  currentDirection: 'up',
+  answered: false,
+  hits: 0,
+  errors: 0,
+  reps: 0,
+  round: 1,
+};
+
+/* =========================================================
+   PANTALLA 1: SETUP
+   ========================================================= */
+const elSelect = document.getElementById('interval-select');
+const elHint = document.getElementById('hint');
+const elStart = document.getElementById('btn-start');
+const elSelectAll = document.getElementById('btn-select-all');
+
+GROUPS.forEach(group => {
+  const card = document.createElement('label');
+  card.className = 'card';
+  card.innerHTML = `
+    <input type="checkbox" data-ids="${group.ids.join(',')}">
+    <span class="check">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span class="label">
+      <span class="short">${group.label}</span><br>
+      <span style="color:var(--muted);font-size:.8rem">${group.ids.map(id => INTERVALS.find(i=>i.id===id).name).join(' · ')}</span>
+    </span>
+  `;
+  const input = card.querySelector('input');
+  input.addEventListener('change', () => {
+    if (input.checked) group.ids.forEach(id => state.selectedIntervals.add(id));
+    else group.ids.forEach(id => state.selectedIntervals.delete(id));
+    updateStartState();
+  });
+  elSelect.appendChild(card);
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+  });
+});
+
+elSelectAll.addEventListener('click', () => {
+  const allChecked = state.selectedIntervals.size === INTERVALS.length;
+  document.querySelectorAll('#interval-select input').forEach(inp => {
+    inp.checked = !allChecked;
+    const ids = inp.dataset.ids.split(',');
+    if (!allChecked) ids.forEach(id => state.selectedIntervals.add(id));
+    else ids.forEach(id => state.selectedIntervals.delete(id));
+  });
+  updateStartState();
+});
+
+function updateStartState() {
+  elStart.disabled = state.selectedIntervals.size === 0;
+  if (state.selectedIntervals.size === 0) {
+    elHint.textContent = 'Selecciona al menos un intervalo para comenzar.';
+  } else {
+    elHint.textContent = `Seleccionados: ${state.selectedIntervals.size} intervalo(s).`;
+  }
+}
+
+/* =========================================================
+   PANTALLA 2: QUIZ
+   ========================================================= */
+const elSetup = document.getElementById('screen-setup');
+const elQuiz = document.getElementById('screen-quiz');
+const elAnswerGrid = document.getElementById('answer-grid');
+const elFeedback = document.getElementById('feedback');
+const elStageText = document.getElementById('stage-text');
+const elWave = document.getElementById('wave');
+const elBtnRepeat = document.getElementById('btn-repeat');
+const elBtnNext = document.getElementById('btn-next');
+const elBtnExit = document.getElementById('btn-exit');
+const sHits = document.getElementById('s-hits');
+const sErrs = document.getElementById('s-errs');
+const sReps = document.getElementById('s-reps');
+const sRound = document.getElementById('s-round');
+
+/* Construir los 12 botones de respuesta */
+INTERVALS.forEach(iv => {
+  const b = document.createElement('button');
+  b.className = 'iv-btn';
+  b.dataset.id = iv.id;
+  b.innerHTML = `<strong>${iv.short}</strong><br><span style="font-size:.8rem;color:var(--muted)">${iv.name}</span>`;
+  b.addEventListener('click', () => handleAnswer(iv.id, b));
+  elAnswerGrid.appendChild(b);
+});
+
+elStart.addEventListener('click', () => {
+  AudioEngine.init();
+  startQuiz();
+});
+
+elBtnRepeat.addEventListener('click', () => {
+  if (!state.currentInterval) return;
+  state.reps++;
+  updateStats();
+  playCurrent();
+});
+
+elBtnNext.addEventListener('click', () => {
+  nextRound();
+});
+
+/* Salir: vuelve directo al menú de selección (modo libre) */
+elBtnExit.addEventListener('click', () => {
+  exitQuiz();
+});
+
+function startQuiz() {
+  elSetup.classList.add('hidden');
+  elQuiz.classList.remove('hidden');
+  state.hits = 0; state.errors = 0; state.reps = 0; state.round = 1;
+  updateStats();
+  newRound();
+}
+
+function exitQuiz() {
+  elQuiz.classList.add('hidden');
+  elSetup.classList.remove('hidden');
+  state.currentInterval = null;
+  elFeedback.textContent = '';
+  elFeedback.className = 'feedback';
+  document.querySelectorAll('.iv-btn').forEach(b => {
+    b.classList.remove('correct','wrong','reveal');
+    b.disabled = false;
+  });
+  elBtnNext.disabled = true;
+  setPlayingUI(false);
+}
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function newRound() {
+  const pool = INTERVALS.filter(iv => state.selectedIntervals.has(iv.id));
+  if (pool.length === 0) { exitQuiz(); return; }
+  state.currentInterval = pickRandom(pool);
+
+  // Raíz aleatoria en un rango cómodo (MIDI 55..67)
+  state.currentRoot = 55 + Math.floor(Math.random() * 13);
+
+  state.currentDirection = state.mode === 'melodic'
+    ? (Math.random() < 0.5 ? 'up' : 'down')
+    : 'up';
+
+  state.answered = false;
+
+  elFeedback.textContent = '';
+  elFeedback.className = 'feedback';
+  document.querySelectorAll('.iv-btn').forEach(b => {
+    b.classList.remove('correct','wrong','reveal');
+    b.disabled = false;
+  });
+  elBtnNext.disabled = true;
+
+  playCurrent();
+  sRound.textContent = state.round;
+}
+
+function playCurrent() {
+  if (!state.currentInterval) return;
+  setPlayingUI(true);
+  const duration = state.mode === 'melodic' ? 4.3 : 4.9;
+  AudioEngine.playInterval(
+    state.currentRoot,
+    state.currentInterval.semitones,
+    state.mode,
+    state.currentDirection
+  );
+  setTimeout(() => setPlayingUI(false), duration * 1000);
+}
+
+function setPlayingUI(playing) {
+  elWave.classList.toggle('playing', playing);
+  if (playing) {
+    const dirTxt = state.mode === 'melodic'
+      ? (state.currentDirection === 'up' ? 'ascendente ↑' : 'descendente ↓')
+      : 'armónico';
+    elStageText.innerHTML = `<strong>Reproduciendo (${dirTxt})...</strong>`;
+  } else {
+    elStageText.innerHTML = `Escucha atentamente y elige el intervalo...`;
+  }
+}
+
+function handleAnswer(id, btn) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const correctId = state.currentInterval.id;
+  const isCorrect = id === correctId;
+
+  if (isCorrect) {
+    state.hits++;
+    btn.classList.add('correct');
+    elFeedback.textContent = `✅ ¡Correcto! Era ${state.currentInterval.name}.`;
+    elFeedback.className = 'feedback ok';
+  } else {
+    state.errors++;
+    btn.classList.add('wrong');
+    document.querySelectorAll('.iv-btn').forEach(b => {
+      if (b.dataset.id === correctId) b.classList.add('reveal');
+    });
+    elFeedback.textContent = `❌ Era ${state.currentInterval.name}.`;
+    elFeedback.className = 'feedback err';
+  }
+
+  document.querySelectorAll('.iv-btn').forEach(b => b.disabled = true);
+  elBtnNext.disabled = false;
+  updateStats();
+}
+
+function nextRound() {
+  state.round++;
+  newRound();
+}
+
+function updateStats() {
+  sHits.textContent = state.hits;
+  sErrs.textContent = state.errors;
+  sReps.textContent = state.reps;
+  sRound.textContent = state.round;
+}
+
+/* Inicializar */
+updateStartState();
+
+/* Atajos de teclado: R = repetir, N = siguiente, Esc = salir */
+document.addEventListener('keydown', (e) => {
+  if (elQuiz.classList.contains('hidden')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'r') elBtnRepeat.click();
+  if (k === 'n' && !elBtnNext.disabled) elBtnNext.click();
+  if (e.key === 'Escape') elBtnExit.click();
+});
+</script>
+</body>
+</html>
